@@ -18,33 +18,45 @@ class BalanceController extends Controller
     public function balance(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'account_id' => 'required'
+            'account_id' => 'required|int'
         ]);
 
-        // TODO: Validate json
-        $validator->setAttributeNames(['account_id' => 'Número da conta é obrigatório']);
         if ($validator->fails()) {
-            return ['error' => 1, 'msg' => $validator->errors()];
-        } else {
-            dd($request->all());
+            return response([
+                'error' => true,
+                'erros' => $validator->getMessageBag()
+            ], 200);
         }
+
+        dd($request->all());
     }
 
     public function event(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'destination' => 'required|string',
+            'type' => 'required|in:deposit,withdraw,transfer',
+            'amount' => 'required|int'
+        ]);
+
+        if ($validator->fails()) {
+            return response([
+                'error' => true,
+                'erros' => $validator->getMessageBag()
+            ], 200);
+        }
+
         $account_id = $request->get('destination');
         $type = $request->get('type');
         $amount = $request->get('amount');
 
         // TODO
-        // validate possible types
         // check if account exists
-
-        if ($type == 'deposit') {
+        if ($type === 'deposit') {
             // deposit event
-        } elseif ($type == 'withdraw') {
+        } elseif ($type === 'withdraw') {
             // withdraw event
-        } elseif ($type == 'transfer') {
+        } elseif ($type === 'transfer') {
             // check destination account exists
             // withdraw from origin and deposit to destination
         }
