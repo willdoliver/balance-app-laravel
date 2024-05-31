@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BalanceModel;
+use Illuminate\Support\Facades\Validator;
 
 class BalanceController extends Controller
 {
@@ -16,8 +17,17 @@ class BalanceController extends Controller
 
     public function balance(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'account_id' => 'required'
+        ]);
+
         // TODO: Validate json
-        dd($request->all());
+        $validator->setAttributeNames(['account_id' => 'Número da conta é obrigatório']);
+        if ($validator->fails()) {
+            return ['error' => 1, 'msg' => $validator->errors()];
+        } else {
+            dd($request->all());
+        }
     }
 
     public function event(Request $request)
