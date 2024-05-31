@@ -5,10 +5,18 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BalanceModel;
+use App\Services\BalanceService;
 use Illuminate\Support\Facades\Validator;
 
 class BalanceController extends Controller
 {
+    protected $balanceService;
+
+    public function __construct(BalanceService $balanceService)
+    {
+        $this->balanceService = $balanceService;
+    }
+
     public function reset(Request $request)
     {
         // TODO
@@ -17,6 +25,7 @@ class BalanceController extends Controller
 
     public function balance(Request $request)
     {
+        // Validate fields
         $validator = Validator::make($request->all(), [
             'account_id' => 'required|int'
         ]);
@@ -26,6 +35,14 @@ class BalanceController extends Controller
                 'error' => true,
                 'erros' => $validator->getMessageBag()
             ], 200);
+        }
+
+        // Check account
+        $account_id = $request->get('account_id');
+        $account_exists = $this->balanceService->findAccountById($account_id);
+
+        if (!$account_exists) {
+            return response([0], 400);
         }
 
         dd($request->all());
@@ -53,7 +70,19 @@ class BalanceController extends Controller
         // TODO
         // check if account exists
         if ($type === 'deposit') {
-            // deposit event
+            $this->balanceService->createAccount(
+                new BalanceModel([
+                    'account_id' => $account_id,
+                    'balance' => $amount
+                ])
+            );
+
+            return response([
+                'destination' => [
+                    'id' => $account_id,
+                    'balance' => $amount
+                ]
+            ], 201);
         } elseif ($type === 'withdraw') {
             // withdraw event
         } elseif ($type === 'transfer') {
