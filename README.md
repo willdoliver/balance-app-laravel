@@ -47,24 +47,23 @@ Response Body: `0`
     ![Generic badge](https://img.shields.io/badge/POST-f5e942.svg)<br>
     Endpoint: `/api/event`<br>
     Body:
-    `javascript
+    ```javascript
     {
         "type":"deposit",
         "destination":"100",
         "amount":10
     }
-    `
-
-        Response Code: `201 Created`<br>
-        Response Body:
-        ```javascript
-        {
-            "destination": {
-                "id":"100",
-                "balance":10
-            }
+    ```
+    Response Code: `201 Created`<br>
+    Response Body:
+    ```javascript
+    {
+        "destination": {
+            "id":"100",
+            "balance":10
         }
-        ```
+    }
+    ```
 
     <hr>
 
@@ -72,23 +71,23 @@ Response Body: `0`
 ![Generic badge](https://img.shields.io/badge/POST-f5e942.svg)<br>
 Endpoint: `/api/event`<br>
 Body:
-`javascript
+    ```javascript
     {
         "type":"deposit",
         "destination":"100",
         "amount":10
     }
-    `
-Response Code: `201 Created`<br>
-Response Body:
-`javascript
-    {
-        "destination": {
-            "id":"100",
-            "balance":20
+    ```
+    Response Code: `201 Created`<br>
+    Response Body:
+    ```javascript
+        {
+            "destination": {
+                "id":"100",
+                "balance":20
+            }
         }
-    }
-    `
+    ```
 <hr>
 
 -   **Get balance for existing account**<br>
@@ -102,54 +101,54 @@ Response Body: `20`
 ![Generic badge](https://img.shields.io/badge/POST-f5e942.svg)<br>
 Endpoint: `/api/event`<br>
 Body:
-`javascript
+    ```javascript
     {
         "type":"withdraw",
         "origin":"200",
         "amount":10
     }
-    `
-Response Code: `404 Not Found`<br>
-Response Body: `0`
+    ```
+    Response Code: `404 Not Found`<br>
+    Response Body: `0`
 <hr>
 
 -   **Withdraw from existing account**<br>
 ![Generic badge](https://img.shields.io/badge/POST-f5e942.svg)<br>
 Endpoint: `/api/event`<br>
-`javascript
+    ```javascript
     {
         "type":"withdraw",
         "origin":"100",
         "amount":5
     }
-    `
-Response Code: `201 Created`<br>
-Response Body:
-`javascript
+    ```
+    Response Code: `201 Created`<br>
+    Response Body:
+    ```javascript
     {
         "origin": {
             "id":"100",
             "balance":15
         }
     }
-    `
+    ```
 <hr>
 
 -   **Transfer from existing account**<br>
 ![Generic badge](https://img.shields.io/badge/POST-f5e942.svg)<br>
 Endpoint: `/api/event`<br>
 Body:
-`javascript
+    ```javascript
     {
         "type":"transfer",
         "origin":"100",
         "amount":15,
         "destination":"300"
     }
-    `
-Response Code: `201 Created`<br>
-Response Body:
-`javascript
+    ```
+    Response Code: `201 Created`<br>
+    Response Body:
+    ```javascript
     {
         "origin":{
             "id":"100",
@@ -160,7 +159,7 @@ Response Body:
             "balance":15
         }
     }
-    `
+    ```
 <hr>
 
 -   **Transfer from non-existing account**<br>
