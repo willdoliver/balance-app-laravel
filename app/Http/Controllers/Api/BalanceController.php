@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BalanceModel;
@@ -19,8 +20,12 @@ class BalanceController extends Controller
 
     public function reset(Request $request)
     {
-        // TODO
-        return ['reset balances'];
+        try {
+            $this->balanceService->resetAccounts();
+            return response()->json('OK', 200);
+        } catch (Exception $e) {
+            return response()->json($e->getMessage(), 200);
+        }
     }
 
     public function balance(Request $request)
@@ -38,20 +43,20 @@ class BalanceController extends Controller
         }
 
         // Check account
-        $account_id = $request->get('account_id');
-        $account_exists = $this->balanceService->findAccountById($account_id);
-
-        if (!$account_exists) {
-            return response([0], 400);
+        $accountId = $request->get('account_id');
+        $accountExists = $this->balanceService->findAccountById($accountId);
+        if (is_null($accountExists)) {
+            return response(0, 404);
         }
 
-        dd($request->all());
+        return response($accountExists->balance, 200);
     }
 
     public function event(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'destination' => 'required|string',
+            'destination' => 'required_without:origin|string',
+            'origin' => 'required_without:destination|string',
             'type' => 'required|in:deposit,withdraw,transfer',
             'amount' => 'required|int'
         ]);
@@ -63,40 +68,82 @@ class BalanceController extends Controller
             ], 200);
         }
 
-        $account_id = $request->get('destination');
         $type = $request->get('type');
         $amount = $request->get('amount');
 
-        // TODO
-        // check if account exists
-        if ($type === 'deposit') {
-            $this->balanceService->createAccount(
-                new BalanceModel([
-                    'account_id' => $account_id,
-                    'balance' => $amount
-                ])
-            );
-
-            return response([
-                'destination' => [
-                    'id' => $account_id,
-                    'balance' => $amount
-                ]
-            ], 201);
-        } elseif ($type === 'withdraw') {
-            // withdraw event
-        } elseif ($type === 'transfer') {
-            // check destination account exists
-            // withdraw from origin and deposit to destination
+        if (in_array($type, ['withdraw', 'transfer'])) {
+            $accountId = $request->get('origin');
+            $accountExists = $this->balanceService->findAccountById($accountId);
+            if (is_null($accountExists)) {
+                return response(0, 404);
+            }
+        } else {
+            $accountId = $request->get('destination');
+            $accountExists = $this->balanceService->findAccountById($accountId);
         }
 
-        $balance = new BalanceModel(
-            [
-                'account_id' => $account_id,
-                'balance' => $amount
-            ]
-        );
+        if ($type === 'deposit') {
+            if (!is_null($accountExists)) {
+                $balanceModel = $this->balanceService->depositAmount($accountExists, $amount);
+            } else {
+                $balanceModel = new BalanceModel([
+                    'accountId' => $accountId,
+                    'balance' => $amount
+                ]);
+            }
 
-        dd($balance);
+            $saved = $this->balanceService->saveAccount($balanceModel);
+
+            if ($saved) {
+                return response([
+                    'destination' => [
+                        'id' => $balanceModel->accountId,
+                        'balance' => $balanceModel->balance
+                    ]
+                ], 201);
+            } else {
+                return response(0, 404);
+            }
+        } elseif ($type === 'withdraw') {
+            $balanceModel = $this->balanceService->withdrawAmount($accountExists, $amount);
+            $saved = $this->balanceService->saveAccount($balanceModel);
+
+            return response([
+                'origin' => [
+                    'id' => $balanceModel->accountId,
+                    'balance' => $balanceModel->balance
+                ]
+            ], 201);
+        } elseif ($type === 'transfer') {
+            // Withdraw from origin
+            $originAccount = $this->balanceService->withdrawAmount($accountExists, $amount);
+            $saved = $this->balanceService->saveAccount($originAccount);
+
+            if ($saved) {
+                //  Deposit to destination
+                $destinationAccountId = $request->get('destination');
+                $destinationAccount = $this->balanceService->findAccountById($destinationAccountId);
+                if (is_null($destinationAccount)) {
+                    $balanceModel = new BalanceModel([
+                        'accountId' => $destinationAccountId,
+                        'balance' => $amount
+                    ]);
+                } else {
+                    $balanceModel = $this->balanceService->depositAmount($accountExists, $amount);
+                }
+                $saved = $this->balanceService->saveAccount($balanceModel);
+            }
+
+            return response([
+                'origin' => [
+                    'id' => $originAccount->accountId,
+                    'balance' => $originAccount->balance
+                ],
+                'destination' => [
+                    'id' => $destinationAccountId,
+                    'balance' => $balanceModel->balance
+                ]
+            ], 201);
+        }
     }
 }

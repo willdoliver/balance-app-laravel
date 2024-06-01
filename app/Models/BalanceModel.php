@@ -13,7 +13,7 @@ class BalanceModel extends Model
      * @var array<int, string, string>
      */
     protected $fillable = [
-        'account_id',
+        'accountId',
         'balance'
     ];
 }

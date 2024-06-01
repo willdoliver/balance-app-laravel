@@ -15,18 +15,40 @@ class BalanceService
         $this->balanceRepository = $balanceRepository;
     }
 
-    public function findAccountById($accountId)
+    public function findAccountById($accountId): ?BalanceModel
     {
-        try {
-            $exists = $this->balanceRepository->getAccountById($accountId);
-            return $exists;
-        } catch (Exception) {
+        return $this->balanceRepository->getAccountById($accountId);
+    }
+
+    public function depositAmount(BalanceModel $balanceModel, $amount): BalanceModel
+    {
+        return new BalanceModel([
+            'accountId' => $balanceModel->accountId,
+            'balance' => $balanceModel->balance + $amount,
+        ]);
+    }
+
+    public function withdrawAmount(BalanceModel $balanceModel, $amount): BalanceModel
+    {
+        if ($amount > $balanceModel->balance) {
+            return $balanceModel;
+        } else {
+            return new BalanceModel([
+                'accountId' => $balanceModel->accountId,
+                'balance' => $balanceModel->balance - $amount,
+            ]);
+
         }
     }
 
-    public function createAccount(BalanceModel $balance)
+    public function saveAccount(BalanceModel $balanceModel)
     {
-        $account = $this->balanceRepository->saveAccount($balance);
-        return $account;
+        return $this->balanceRepository->saveAccount($balanceModel);
     }
+
+    public function resetAccounts(): void
+    {
+        $this->balanceRepository->resetAllAccounts();
+    }
+
 }

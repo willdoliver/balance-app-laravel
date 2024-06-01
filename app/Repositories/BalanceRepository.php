@@ -2,32 +2,33 @@
 
 namespace App\Repositories;
 
+use Illuminate\Support\Facades\Cache;
 use App\Models\BalanceModel;
 use Exception;
 
 class BalanceRepository
 {
-    protected $accounts;
-
-    public function __construct(array $accounts = [])
+    public function getAccountById(int $accountId): ?BalanceModel
     {
-        $this->accounts = $accounts;
+        $allAccounts = Cache::get('allAccounts');
+        return $allAccounts[$accountId] ?? null;
     }
 
-    public function getAccountById(int $account_id): ?BalanceModel
-    {
-        return $this->accounts[$account_id] ?? null;
-    }
-
-    public function saveAccount(BalanceModel $balanceModel)
+    public function saveAccount(BalanceModel $balanceModel): bool
     {
         try {
-            $this->accounts[$balanceModel->account_id] = $balanceModel;
-            return $balanceModel;
+            $allAccounts = Cache::get('allAccounts') ?? [];
+            $allAccounts[$balanceModel->accountId] = $balanceModel;
+
+            Cache::put('allAccounts', $allAccounts, now()->addMinutes(60));
+            return true;
         } catch (Exception) {
-            return [
-                'error' => 'Erro while creating account'
-            ];
+            return false;
         }
+    }
+
+    public function resetAllAccounts(): bool
+    {
+        return Cache::flush();
     }
 }
